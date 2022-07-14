@@ -17,7 +17,8 @@ const int Echo = 11;   //Pin digital 11 para el Echo del sensor
 
 char comando = 's', modo = 'a'; //comando y modo iniciales -- MOTOR PARADO (S) Y MODO AUTOMATICO (A)
 char aux; //variable auxiliar para actualizar el comando entrante por el monitor serie
-int detectado = 0; //DETECCION DE LINEA BLANCA = 0
+
+int detectado = 1; //DETECCION DE LINEA BLANCA = 0
 
 const int LLAVE = 12;
 
@@ -44,7 +45,7 @@ void setup() {
 
   Serial.begin(9600); //Seteo los baudios para comunicarme con el monitor serial. 9600 es la vieja confiable.
 
-  delay (5000);
+  delay (5000); //5 segundos iniciales de quietud
 }
 
 void loop() 
@@ -52,7 +53,7 @@ void loop()
   for (;;) { //Función loop() está anidado en un ciclo externo con algunas comprobaciones adicionales -- optimiza tiempo si la salteamos
 
   
-    delay (500);
+    delay (1000);
     
       aux = Serial.read();
       if (aux == 'm' || aux == 'c' || aux == 's' || aux == 'd' || aux == 'i' || aux == 'w' || aux == 'a'){
@@ -79,7 +80,7 @@ void loop()
               else 
               {
                 comandos('m');
-                //checkEnemy ();
+                checkEnemy ();
                 }
             }
           }
@@ -126,7 +127,8 @@ long ultrasonido()
   digitalWrite(Trigger, LOW);
   
   t = pulseIn(Echo, HIGH); //obtenemos el ancho del pulso
-  d = t/59;             //escalamos el tiempo a una distancia en cm
+  // 1/59 = 0.0169492
+  d = t * 0.0169492;             //escalamos el tiempo a una distancia en cm
   
   Serial.print("Distancia: ");
   Serial.print(d);      //Enviamos serialmente el valor de la distancia
@@ -135,6 +137,7 @@ long ultrasonido()
   //delay(100);          //Hacemos una pausa de 100ms
   
   return d;
+  // return d;
 }
 
 long promedioDistancia ()
@@ -147,13 +150,15 @@ long promedioDistancia ()
     distancia = ultrasonido(); 
     distancia_total = distancia_total + distancia;
   }
-  
-  distancia_prom = distancia_total/10;
+  // 1/10 = 0.1
+  distancia_prom = distancia_total * 0.1 ;
   Serial.println("distancia promedio:");
   Serial.println(distancia_prom);
-  delay(1000);
+  //delay(1000);
     
   return distancia_prom;
+
+  //return (distancia_total * 0.1); --- esto lo agrego cuando saque los serial print
   }
 
 //busqueda del contrincante
@@ -186,6 +191,8 @@ int checkSenLineaTodos () //VERIFICO SI ALGUN SENSOR DETECTA ALGO
   Serial.println("resul linea cerca:");
   Serial.println(linea_cerca);
   return linea_cerca; //linea_cerca = 0 significa LINEA BLANCA CERCA AHHHH CORRAN
+  
+  //return (sensor1 & sensor2 & sensor3 & sensor4); --- esto lo deberia poner cuando saque los serial print
   }
 
 //leo sensor
@@ -247,7 +254,7 @@ void reaccionFrenteDer ()
   comandos('c');
   delay (2);
   comandos('i');
-  tiempoGiro(45)
+  tiempoGiro(45);
   comandos('m');
   }
 
@@ -257,7 +264,7 @@ void reaccionFrenteIzq ()
   comandos('c');
   delay (2);
   comandos('d');
-  tiempoGiro(45)
+  tiempoGiro(45);
   comandos('m');
   }
 
@@ -291,7 +298,8 @@ int tiempoGiro(int angulo) //calculo el tiempo que requiere el robot para girar 
   int tgiro360 = 8; //tiempo que tarda en dar un giro completo 8 segundos -- aprox
 
   //REGLA DE 3 SIMPLES --- esto capaz podria estar en una funcion aparte
-  return ((tgiro360 * angulo)/ 360);
+  // 1/360 = 0.00277778
+  return ((tgiro360 * angulo) * 0.00277778);
   }
 
 void comandos(char comando)
