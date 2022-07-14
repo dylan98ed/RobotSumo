@@ -49,41 +49,41 @@ void setup() {
 
 void loop() 
 { 
-  delay (500);
+  for (;;) { //Función loop() está anidado en un ciclo externo con algunas comprobaciones adicionales -- optimiza tiempo si la salteamos
+
   
-  aux = Serial.read();
-  if (aux == 'm' || aux == 'c' || aux == 's' || aux == 'd' || aux == 'i' || aux == 'w' || aux == 'a'){
-    comando = aux;
-  }
-
-  //ejecuto funcion CASE
-  comandos(comando);
-
-  Serial.println("VALOR DE LLAVE");
-  Serial.println(LLAVE);
-  if (digitalRead(LLAVE) == HIGH)
-  {
-    Serial.println("VALOR DE LLAVE");
-    Serial.println(LLAVE);
-    comandos('m');
-    }
-    else
-    {
-      if (modo == 'a' )
-      {
-        if (checkSenLineaTodos () == detectado)
-        {
-          comandos('s');
-          Serial.println("LINEA BLANCA A LA VISTA");
-          checkSensorLinea ();
-          }
-          else 
-          {
-            comandos('m');
-            //checkEnemy ();
-            }
-        }
+    delay (500);
+    
+      aux = Serial.read();
+      if (aux == 'm' || aux == 'c' || aux == 's' || aux == 'd' || aux == 'i' || aux == 'w' || aux == 'a'){
+        comando = aux;
       }
+    
+      //ejecuto funcion CASE
+      comandos(comando);
+    
+      if (digitalRead(LLAVE) == HIGH)
+      {
+        comandos('m');
+        }
+        else
+        {
+          if (modo == 'a' )
+          {
+            if (checkSenLineaTodos () == detectado)
+            {
+              comandos('s');
+              Serial.println("LINEA BLANCA A LA VISTA");
+              checkSensorLinea ();
+              }
+              else 
+              {
+                comandos('m');
+                //checkEnemy ();
+                }
+            }
+          }
+  }
 }
 
 void marcha(int b1,int b2) 
@@ -199,7 +199,6 @@ int leerSensorLinea (int sensor)
 //verifico cual sensor detecto la linea blanca
 void checkSensorLinea ()
 {
-  //INCHECKEADO
   /*
    * int IN1 = 1; //sensor de linea Frente-Derecho
       int IN2 = 2; //sensor de linea Trasero-Derecho
@@ -265,32 +264,34 @@ void reaccionFrenteIzq ()
 //reaccion a sensor trasero-derecho
 void reaccionTraseroDer ()
 {
-  comandos('c');
+  //hay que chekar!!
+  
+  //SI LO ESTAN EMPUJANDO Y ESTA POR CAERSE EN EL BORDE DERECHO -- DOBLA LAS RUEDAS PARA LA DER ?
+  comandos('d');
   delay (2);
+  
+  //UNA VEZ QUE SALE DE PELIGRO INTENTA TIRAR AL ENEMIGO GIRANDO PARA LA IZQUIERDA (asumo que van a quedar en paralelo mirando al borde -- el enemy estaria a la izq)
   comandos('i');
-  tiempoGiro(45)
-  comandos('m');
   }
 
 //reaccion a sensor trasero-izquierdo
 void reaccionTraseroIzq ()
 {
-  comandos('c');
+  //hay que chekar!!
+  
+  //SI LO ESTAN EMPUJANDO Y ESTA POR CAERSE EN EL BORDE IZQUIERDO -- DOBLA LAS RUEDAS PARA LA IZQ ?
+  comandos('i');
   delay (2);
+  //UNA VEZ QUE SALE DE PELIGRO INTENTA TIRAR AL ENEMIGO GIRANDO PARA LA DERECHA (asumo que van a quedar en paralelo mirando al borde -- el enemy estaria a la der)
   comandos('d');
-  tiempoGiro(45)
-  comandos('m');
   }
 
 int tiempoGiro(int angulo) //calculo el tiempo que requiere el robot para girar cierto angulo
 {
   int tgiro360 = 8; //tiempo que tarda en dar un giro completo 8 segundos -- aprox
-  int xtiempo;
 
   //REGLA DE 3 SIMPLES --- esto capaz podria estar en una funcion aparte
-  xtiempo = (tgiro360 * angulo)/ 360;
-  
-  return xtiempo;
+  return ((tgiro360 * angulo)/ 360);
   }
 
 void comandos(char comando)
