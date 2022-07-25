@@ -289,7 +289,7 @@ void reaccionFrenteDer()
   maquinaEstados('c');
   delay(2000);
   maquinaEstados('i');
-  tiempoGiro(45);
+  delay(tiempoGiro(45));
   maquinaEstados('m');
 }
 
@@ -299,7 +299,7 @@ void reaccionFrenteIzq()
   maquinaEstados('c');
   delay(2000);
   maquinaEstados('d');
-  tiempoGiro(45);
+  delay(tiempoGiro(45));
   maquinaEstados('m');
 }
 
@@ -330,8 +330,9 @@ void reaccionTraseroIzq()
 
 int tiempoGiro(int angulo) //calculo el tiempo que requiere el robot para girar cierto angulo
 {
-  int tgiro360 = 8; //tiempo que tarda en dar un giro completo 8 segundos -- aprox
-
+  int tgiro360 = 8000; //tiempo que tarda en dar un giro completo 8 segundos -- aprox
+  //8seg = 8000ms 
+  
   //REGLA DE 3 SIMPLES --- esto capaz podria estar en una funcion aparte
   // 1/360 = 0.00277778
   return ((tgiro360 * angulo) * 0.00277778);
