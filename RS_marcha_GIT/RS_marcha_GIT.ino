@@ -18,7 +18,7 @@ const int SENS_ULTRASON_ECHO = 11;   //Pin digital 11 para el ECHO del sensor ul
 char comando = 's', modo = 'a'; //comando y modo iniciales -- MOTOR PARADO (S) Y MODO AUTOMATICO (A)
 char aux; //variable auxiliar para actualizar el comando entrante por el monitor serie
 
-int LINEA_DETECTADA = 1; //DETECCION DE LINEA BLANCA = 0
+int LINEA_DETECTADA = 0; //DETECCION DE LINEA BLANCA = 0
 
 const int LLAVE = 12;
 
@@ -42,6 +42,7 @@ void setup()
   //seteo pines de entrada del sensor ultrasonido
   pinMode(SENS_ULTRASON_TRIGGER, OUTPUT); //pin como salida
   pinMode(SENS_ULTRASON_ECHO, INPUT);  //pin como entrada
+  
   digitalWrite(SENS_ULTRASON_TRIGGER, LOW);//Inicializamos el pin con 0
 
   Serial.begin(9600); //Seteo los baudios para comunicarme con el monitor serial. 9600 es la vieja confiable.
@@ -53,40 +54,43 @@ void loop()
 { 
   for(;;) 
   { //Función loop() está anidado en un ciclo externo con algunas comprobaciones adicionales -- optimiza tiempo si la salteamos
-
   
     delay(1000);
     
-      aux = Serial.read();
-      if(aux == 'm' || aux == 'c' || aux == 's' || aux == 'd' || aux == 'i' || aux == 'w' || aux == 'a')
-      {
-        comando = aux;
-        }
+    aux = Serial.read();
+    if(aux == 'm' || aux == 'c' || aux == 's' || aux == 'd' || aux == 'i' || aux == 'w' || aux == 'a' || aux == 't')
+    {
+      comando = aux;
+    }     
     
-      //ejecuto funcion CASE
-      comandos(comando);
+    //ejecuto funcion CASE
+    maquinaEstados(comando);
     
-      if(digitalRead(LLAVE) == HIGH)
+    if(digitalRead(LLAVE) == HIGH)
+    {
+      maquinaEstados('m');
+    }
+    else
+    {
+      if(modo == 'a' ) //modo automatico
       {
-        comandos('m');
-        }
-        else
+        if(checkSenLineaTodos() == LINEA_DETECTADA)
         {
-          if(modo == 'a' )
-          {
-            if(checkSenLineaTodos () == LINEA_DETECTADA)
-            {
-              comandos('s');
-              Serial.println("LINEA BLANCA A LA VISTA");
-              checkSensorLinea();
-              }
-              else 
-              {
-                comandos('m');
-                checkEnemy();
-                }
-            }
-          }
+          maquinaEstados('s');
+          Serial.println("LINEA BLANCA A LA VISTA");
+          checkSensorLinea();
+        }
+        else 
+        {
+          maquinaEstados('m');
+          checkEnemy();
+        }
+      }
+      if(modo == 't' ) //modo test
+      {
+        testUltrasonido();
+      }
+    }
   }
 }
 /*
@@ -137,29 +141,28 @@ long medirDistancia()
   long d; //distancia en centimetros
 
   digitalWrite(SENS_ULTRASON_TRIGGER, HIGH);
-  delayMicroseconds(10);          //Enviamos un pulso de 10us
+  delayMicroseconds(10);                        //Enviamos un pulso de 10us
   digitalWrite(SENS_ULTRASON_TRIGGER, LOW);
   
-  t = pulseIn(SENS_ULTRASON_ECHO, HIGH); //obtenemos el ancho del pulso
+  t = pulseIn(SENS_ULTRASON_ECHO, HIGH);        //obtenemos el ancho del pulso
   // 1/59 = 0.0169492
-  d = t * 0.0169492;             //escalamos el tiempo a una distancia en cm
-  /*
+  d = t * 0.0169492;                            //escalamos el tiempo a una distancia en cm
+  
   Serial.print("Distancia: ");
-  Serial.print(d);      //Enviamos serialmente el valor de la distancia
+  Serial.print(d);                              //Enviamos serialmente el valor de la distancia
   Serial.print("cm");
   Serial.println();
   //delay(100);          //Hacemos una pausa de 100ms
-  */
+  
   return d;
-  // return d;
 }
 
+//calculo de promedio de 10 distancias sensadas por el ultrasonido
 long promedioDistancia()
 {
   long distancia, distancia_prom;
   long distancia_total = 0;
 
-  //calculo de promedio de 10 distancias sensadas por el ultrasonido
   for(int i = 10 ; i>0; i--)
   {
     distancia = medirDistancia(); 
@@ -167,6 +170,7 @@ long promedioDistancia()
   }
   // 1/10 = 0.1
   distancia_prom = distancia_total * 0.1 ;
+  
   Serial.println("distancia promedio:");
   Serial.println(distancia_prom);
   //delay(1000);
@@ -174,7 +178,7 @@ long promedioDistancia()
   return distancia_prom;
 
   //return (distancia_total * 0.1); --- esto lo agrego cuando saque los serial print
-  }
+}
 /*
  * ************************************************************************************************************************************************
  * ************************************************************************************************************************************************
@@ -183,22 +187,30 @@ long promedioDistancia()
  */
 //busqueda del contrincante
 void checkEnemy()
-{ 
+{
   long distancia_promedio = promedioDistancia();
   Serial.println("distancia promedio en CHECK ENEMY:");
   Serial.print(distancia_promedio);
   
-  if(distancia_promedio <= 75) // el ring tiene un area de 175cm o 154cm -- alrededor hay 100cm vacio
+  if(distancia_promedio <= 75) // el ring tiene un area de 175cm o 154cm -- alrededor hay 100cm vacio  
   {
-    Serial.println("enemigo al frente!");
-    comandos('m');
-    }
-    else
-    {
-      Serial.println("no hay nadie uwu");
-      comandos('i');
-      }
+    Serial.println("enemigo al frente!");    
+    maquinaEstados('m');
   }
+  else
+  {
+    Serial.println("no hay nadie uwu");
+    maquinaEstados('i');
+  }
+}
+
+void testUltrasonido()
+{
+  maquinaEstados('s');
+  long distancia_promedio = promedioDistancia();
+  Serial.println("distancia promedio en CHECK ENEMY:");
+  Serial.print(distancia_promedio);
+}
 /*
  * ************************************************************************************************************************************************
  * ************************************************************************************************************************************************
@@ -218,7 +230,7 @@ int checkSenLineaTodos() //VERIFICO SI ALGUN SENSOR DETECTA ALGO
   return linea_cerca; //linea_cerca = 0 significa LINEA BLANCA CERCA AHHHH CORRAN
   
   //return (sensor1 & sensor2 & sensor3 & sensor4); --- esto lo deberia poner cuando saque los serial print
-  }
+}
 
 //leo sensor
 int leerSensorLinea(int sensor)
@@ -226,52 +238,45 @@ int leerSensorLinea(int sensor)
   int value = 1;
   value = digitalRead(sensor);
   return value;
-  }
+}
 
 //verifico cual sensor detecto la linea blanca
 void checkSensorLinea()
 {
   /*
    * int SENS_LIN_FDER = 1; //sensor de linea Frente-Derecho
-      int SENS_LIN_TDER = 2; //sensor de linea Trasero-Derecho
-      int SENS_LIN_FIZQ = 3; //sensor de linea Frente-Izquierdo
-      int SENS_LIN_TIZQ = 4; //sensor de linea Trasero-Izquierdo
+     int SENS_LIN_TDER = 2; //sensor de linea Trasero-Derecho
+     int SENS_LIN_FIZQ = 3; //sensor de linea Frente-Izquierdo
+     int SENS_LIN_TIZQ = 4; //sensor de linea Trasero-Izquierdo
    */
-  int sensorPin;
-  sensorPin = leerSensorLinea(SENS_LIN_FDER); //sensor de linea Frente-Derecho
-  if(sensorPin == LINEA_DETECTADA) //sensor de linea Frente-Derecho
+  if(leerSensorLinea(SENS_LIN_TIZQ) == LINEA_DETECTADA) //sensor de linea Trasero-Izquierdo
   {
-    Serial.println("sensor de linea Frente-Derecho");
-    reaccionFrenteDer();
-    }
-    else
+    Serial.println("sensor de linea Trasero-Izquierdo");
+    reaccionTraseroIzq();
+  }
+  else
+  {
+    if(leerSensorLinea(SENS_LIN_TDER) == LINEA_DETECTADA) //sensor de linea Trasero-Derecho
     {
-      sensorPin = leerSensorLinea(SENS_LIN_TDER); //sensor de linea Trasero-Derecho
-      if(sensorPin == LINEA_DETECTADA) //sensor de linea Trasero-Derecho
+      Serial.println("sensor de linea Trasero-Derecho");
+      reaccionTraseroDer();
+     }
+     else 
+     {
+      if(leerSensorLinea(SENS_LIN_FIZQ) == LINEA_DETECTADA) //sensor de linea Frente-Izquierdo
       {
-        Serial.println("sensor de linea Trasero-Derecho");
-        reaccionTraseroDer();
-        }
-        else 
-        {
-          sensorPin = leerSensorLinea(SENS_LIN_FIZQ); //sensor de linea Frente-Izquierdo
-          if(sensorPin == LINEA_DETECTADA) //sensor de linea Frente-Izquierdo
-          {
-            Serial.println("sensor de linea Frente-Izquierdo");
-            reaccionFrenteIzq();
-            }
-            else
-            {
-              sensorPin = leerSensorLinea(SENS_LIN_TIZQ); //sensor de linea Trasero-Izquierdo
-              if(sensorPin == LINEA_DETECTADA) //sensor de linea Trasero-Izquierdo
-              {
-                Serial.println("sensor de linea Trasero-Izquierdo");
-                reaccionTraseroIzq();
-                }
-              }
-          }
+        Serial.println("sensor de linea Frente-Izquierdo");
+        reaccionFrenteIzq();
+      }
+      else
+      {
+        //sensor de linea Frente-Derecho
+        Serial.println("sensor de linea Frente-Derecho");
+        reaccionFrenteDer();
+      }
       }
   }
+}
 /*
  * ************************************************************************************************************************************************
  * ************************************************************************************************************************************************
@@ -281,22 +286,22 @@ void checkSensorLinea()
 //reaccion a sensor frente-derecho
 void reaccionFrenteDer()
 {
-  comandos('c');
-  delay(2);
-  comandos('i');
+  maquinaEstados('c');
+  delay(2000);
+  maquinaEstados('i');
   tiempoGiro(45);
-  comandos('m');
-  }
+  maquinaEstados('m');
+}
 
 //reaccion a sensor frente-izquierdo
 void reaccionFrenteIzq()
 {
-  comandos('c');
-  delay(2);
-  comandos('d');
+  maquinaEstados('c');
+  delay(2000);
+  maquinaEstados('d');
   tiempoGiro(45);
-  comandos('m');
-  }
+  maquinaEstados('m');
+}
 
 //reaccion a sensor trasero-derecho
 void reaccionTraseroDer()
@@ -304,12 +309,12 @@ void reaccionTraseroDer()
   //hay que chekar!!
   
   //SI LO ESTAN EMPUJANDO Y ESTA POR CAERSE EN EL BORDE DERECHO -- DOBLA LAS RUEDAS PARA LA DER ?
-  comandos('d');
-  delay(2);
+  maquinaEstados('d');
+  delay(2000);
   
   //UNA VEZ QUE SALE DE PELIGRO INTENTA TIRAR AL ENEMIGO GIRANDO PARA LA IZQUIERDA (asumo que van a quedar en paralelo mirando al borde -- el enemy estaria a la izq)
-  comandos('i');
-  }
+  maquinaEstados('i');
+}
 
 //reaccion a sensor trasero-izquierdo
 void reaccionTraseroIzq()
@@ -317,11 +322,11 @@ void reaccionTraseroIzq()
   //hay que chekar!!
   
   //SI LO ESTAN EMPUJANDO Y ESTA POR CAERSE EN EL BORDE IZQUIERDO -- DOBLA LAS RUEDAS PARA LA IZQ ?
-  comandos('i');
-  delay(2);
+  maquinaEstados('i');
+  delay(2000);
   //UNA VEZ QUE SALE DE PELIGRO INTENTA TIRAR AL ENEMIGO GIRANDO PARA LA DERECHA (asumo que van a quedar en paralelo mirando al borde -- el enemy estaria a la der)
-  comandos('d');
-  }
+  maquinaEstados('d');
+}
 
 int tiempoGiro(int angulo) //calculo el tiempo que requiere el robot para girar cierto angulo
 {
@@ -330,13 +335,13 @@ int tiempoGiro(int angulo) //calculo el tiempo que requiere el robot para girar 
   //REGLA DE 3 SIMPLES --- esto capaz podria estar en una funcion aparte
   // 1/360 = 0.00277778
   return ((tgiro360 * angulo) * 0.00277778);
-  }
+}
 /*
  * ************************************************************************************************************************************************
  * ************************************************************************************************************************************************
  * COMANDOS
  */
-void comandos(char comando)
+void maquinaEstados(char comando)
 {
   switch(comando) 
   {
@@ -372,10 +377,14 @@ void comandos(char comando)
       Serial.println("motor MODO AUTOMATICO");
       modo = 'a';
       break;
+    case 't':                           //si pongo "t" en el monitor serial ACTIVO MODO TEST
+      Serial.println("motor MODO TEST");
+      modo = 't';
+      break;
     default:                            //si no pongo ningun comando, el motor se detiene
       Serial.println("motor detenido");
       parada(MOT1_C1,MOT1_C2); //motor1
       parada(MOT2_C1,MOT2_C2); //motor2
       break;
   }
- }
+}
