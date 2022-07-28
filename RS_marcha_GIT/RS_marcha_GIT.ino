@@ -12,8 +12,8 @@ int SENS_LIN_TDER = 3; //sensor de linea Trasero-Derecho
 int SENS_LIN_FIZQ = 4; //sensor de linea Frente-Izquierdo
 int SENS_LIN_TIZQ = 5; //sensor de linea Trasero-Izquierdo
 
-const int SENS_ULTRASON_TRIGGER = 10;   //Pin digital 10 para el TRIGGER del sensor ultrasonido
-const int SENS_ULTRASON_ECHO = 11;   //Pin digital 11 para el ECHO del sensor ultrasonido
+const int SENS_ULTRASON_TRIGGER_1 = 10;   //Pin digital 10 para el TRIGGER del sensor ultrasonido
+const int SENS_ULTRASON_ECHO_1 = 11;   //Pin digital 11 para el ECHO del sensor ultrasonido
 
 char comando = 's', modo = 'a'; //comando y modo iniciales -- MOTOR PARADO (S) Y MODO AUTOMATICO (A)
 char aux; //variable auxiliar para actualizar el comando entrante por el monitor serie
@@ -40,10 +40,10 @@ void setup()
   pinMode(SENS_LIN_TIZQ, INPUT); //sensor de Trasero-Izquierdo
   
   //seteo pines de entrada del sensor ultrasonido
-  pinMode(SENS_ULTRASON_TRIGGER, OUTPUT); //pin como salida
-  pinMode(SENS_ULTRASON_ECHO, INPUT);  //pin como entrada
+  pinMode(SENS_ULTRASON_TRIGGER_1, OUTPUT); //pin como salida
+  pinMode(SENS_ULTRASON_ECHO_1, INPUT);  //pin como entrada
   
-  digitalWrite(SENS_ULTRASON_TRIGGER, LOW);//Inicializamos el pin con 0
+  digitalWrite(SENS_ULTRASON_TRIGGER_1, LOW);//Inicializamos el pin con 0
 
   Serial.begin(9600); //Seteo los baudios para comunicarme con el monitor serial. 9600 es la vieja confiable.
 
@@ -140,11 +140,11 @@ long medirDistancia()
   long t; //tiempo que demora en llegar el eco
   long d; //distancia en centimetros
 
-  digitalWrite(SENS_ULTRASON_TRIGGER, HIGH);
+  digitalWrite(SENS_ULTRASON_TRIGGER_1, HIGH);
   delayMicroseconds(10);                        //Enviamos un pulso de 10us
-  digitalWrite(SENS_ULTRASON_TRIGGER, LOW);
+  digitalWrite(SENS_ULTRASON_TRIGGER_1, LOW);
   
-  t = pulseIn(SENS_ULTRASON_ECHO, HIGH);        //obtenemos el ancho del pulso
+  t = pulseIn(SENS_ULTRASON_ECHO_1, HIGH);        //obtenemos el ancho del pulso
   // 1/59 = 0.0169492
   d = t * 0.0169492;                            //escalamos el tiempo a una distancia en cm
   
@@ -289,7 +289,7 @@ void reaccionFrenteDer()
   maquinaEstados('c');
   delay(2000);
   maquinaEstados('i');
-  tiempoGiro(45);
+  delay(tiempoGiro(45));
   maquinaEstados('m');
 }
 
@@ -299,7 +299,7 @@ void reaccionFrenteIzq()
   maquinaEstados('c');
   delay(2000);
   maquinaEstados('d');
-  tiempoGiro(45);
+  delay(tiempoGiro(45));
   maquinaEstados('m');
 }
 
@@ -330,8 +330,9 @@ void reaccionTraseroIzq()
 
 int tiempoGiro(int angulo) //calculo el tiempo que requiere el robot para girar cierto angulo
 {
-  int tgiro360 = 8; //tiempo que tarda en dar un giro completo 8 segundos -- aprox
-
+  int tgiro360 = 8000; //tiempo que tarda en dar un giro completo 8 segundos -- aprox
+  //8seg = 8000ms 
+  
   //REGLA DE 3 SIMPLES --- esto capaz podria estar en una funcion aparte
   // 1/360 = 0.00277778
   return ((tgiro360 * angulo) * 0.00277778);

@@ -21,13 +21,18 @@ int SENS_LIN_TDER = 3;  //sensor de linea Trasero-Derecho
 int SENS_LIN_FIZQ = 4;  //sensor de linea Frente-Izquierdo
 int SENS_LIN_TIZQ = 5;  //sensor de linea Trasero-Izquierdo
 
-const int SENS_ULTRASON_TRIGGER = 10; //Pin digital 10 para el TRIGGER del sensor ultrasonido
-const int SENS_ULTRASON_ECHO = 11;    //Pin digital 11 para el ECHO del sensor ultrasonido
+const int SENS_ULTRASON_TRIGGER_1 = 10; //Pin digital 10 para el TRIGGER del sensor ultrasonido
+const int SENS_ULTRASON_ECHO_1 = 11;    //Pin digital 11 para el ECHO del sensor ultrasonido
 
-int LINEA_DETECTADA = 1; //DETECCION DE LINEA BLANCA = 0
+int LINEA_DETECTADA = 0; //DETECCION DE LINEA BLANCA = 0
+const int LLAVE = 12;
+
+char comando = 's'; //variable de la maquina de estado.
 
 void setup() 
 {
+
+  pinMode(LLAVE, INPUT); //SI CONECTAMOS ESTA LLAVE A 5V EL MOTOR AVANZA ATR
   
   //seteo pines de entrada de motores, sensores de linea y ultrasonido
   pinMode(MOT1_C1, OUTPUT);
@@ -40,10 +45,10 @@ void setup()
   pinMode(SENS_LIN_FIZQ, INPUT);
   pinMode(SENS_LIN_TIZQ, INPUT);
   
-  pinMode(SENS_ULTRASON_TRIGGER, OUTPUT);
-  pinMode(SENS_ULTRASON_ECHO, INPUT);
-  
-  digitalWrite(SENS_ULTRASON_TRIGGER, LOW);//Inicializamos el pin con 0
+  pinMode(SENS_ULTRASON_TRIGGER_1, OUTPUT);
+  pinMode(SENS_ULTRASON_ECHO_1, INPUT);
+
+  digitalWrite(SENS_ULTRASON_TRIGGER_1, LOW);//Inicializamos el pin con 0
 
   delay(5000); //5 segundos iniciales de quietud
 }
@@ -53,6 +58,13 @@ void loop()
   for(;;) 
   {
     delay(50);
+    
+    if(digitalRead(LLAVE) == HIGH)  //el robot avanza ignorando los sensores
+    {
+      comandos('m');
+    }
+    else
+    {
       if(checkSenLineaTodos() == LINEA_DETECTADA)
       {
         comandos('s');
@@ -62,6 +74,7 @@ void loop()
       {
         checkEnemy();
       }
+    }
   }
 }
 
@@ -129,11 +142,11 @@ long medirDistancia()
   long t; //tiempo que demora en llegar el eco
   long d; //distancia en centimetros
 
-  digitalWrite(SENS_ULTRASON_TRIGGER, HIGH);
+  digitalWrite(SENS_ULTRASON_TRIGGER_1, HIGH);
   delayMicroseconds(10);                      //Enviamos un pulso de 10us
-  digitalWrite(SENS_ULTRASON_TRIGGER, LOW);
+  digitalWrite(SENS_ULTRASON_TRIGGER_1, LOW);
   
-  t = pulseIn(SENS_ULTRASON_ECHO, HIGH);      //obtenemos el ancho del pulso
+  t = pulseIn(SENS_ULTRASON_ECHO_1, HIGH);      //obtenemos el ancho del pulso
   // 1/59 = 0.0169492
   d = t * 0.0169492;                          //escalamos el tiempo a una distancia en cm
 
@@ -160,13 +173,14 @@ void checkEnemy()
 { 
   long distancia_promedio = promedioDistancia();
   
-  if(distancia_promedio <= 75) // el ring tiene un area de 175cm o 154cm -- alrededor hay 100cm vacio
+  if(distancia_promedio <= 10) // el ring tiene un area de 175cm o 154cm -- alrededor hay 100cm vacio
   {
     comandos('m');
   }
   else
   {
-    comandos('i');
+    //comandos('i');
+    comandos('m');
   }
 }
 
@@ -253,7 +267,7 @@ void reaccionTraseroDer()
   delay(2000);
   
   //UNA VEZ QUE SALE DE PELIGRO INTENTA TIRAR AL ENEMIGO GIRANDO PARA LA IZQUIERDA (asumo que van a quedar en paralelo mirando al borde -- el enemy estaria a la izq)
-  comandos('i');
+  //comandos('i');
   }
 
 //reaccion a sensor trasero-izquierdo
@@ -265,14 +279,14 @@ void reaccionTraseroIzq()
   comandos('i');
   delay(2000);
   //UNA VEZ QUE SALE DE PELIGRO INTENTA TIRAR AL ENEMIGO GIRANDO PARA LA DERECHA (asumo que van a quedar en paralelo mirando al borde -- el enemy estaria a la der)
-  comandos('d');
+  //comandos('d');
   }
 
 int tiempoGiro(int angulo) //calculo el tiempo que requiere el robot para girar cierto angulo
 {
   int tgiro360 = 8000; //tiempo que tarda en dar un giro completo 8 segundos -- aprox
-  
+
   //REGLA DE 3 SIMPLES --- esto capaz podria estar en una funcion aparte
   // 1/360 = 0.00277778
-  return ((angulo * 0.00277778) * tgiro360);
+  return (0.00277778 * angulo * tgiro360);
 }
