@@ -11,10 +11,10 @@
  * ESTADO: EN PROCESO
  ****************************************************************************************************************/
  
-int MOT1_C1 = 6;        //motor1 conector 1 lado izquierdo
-int MOT1_C2 = 7;        //motor1 conector 2
-int MOT2_C1 = 8;        //motor2 conector 1 lado derecho
-int MOT2_C2 = 9;        //motor2 conector 2
+int MOT1_C1 = 6;        //motor1 conector 1 lado izquierdo -- rojo
+int MOT1_C2 = 7;        //motor1 conector 2 -- marron
+int MOT2_C1 = 8;        //motor2 conector 1 lado derecho -- blanco
+int MOT2_C2 = 9;        //motor2 conector 2 -- violeta
 
 int SENS_LIN_FDER = 2;  //sensor de linea Frente-Derecho
 int SENS_LIN_TDER = 3;  //sensor de linea Trasero-Derecho
@@ -205,35 +205,38 @@ int leerSensorLinea(int sensor)
 //verifico cual sensor detecto la linea blanca
 void checkSensorLinea()
 {
-  int sensorPin;
-  sensorPin = leerSensorLinea(SENS_LIN_FDER); //sensor de linea Frente-Derecho
-  if(sensorPin == LINEA_DETECTADA)
+  /*
+   * int SENS_LIN_FDER = 1; //sensor de linea Frente-Derecho
+     int SENS_LIN_TDER = 2; //sensor de linea Trasero-Derecho
+     int SENS_LIN_FIZQ = 3; //sensor de linea Frente-Izquierdo
+     int SENS_LIN_TIZQ = 4; //sensor de linea Trasero-Izquierdo
+   */
+  if(leerSensorLinea(SENS_LIN_TIZQ) == LINEA_DETECTADA) //sensor de linea Trasero-Izquierdo
   {
-    reaccionFrenteDer();
+    Serial.println("sensor de linea Trasero-Izquierdo");
+    reaccionTraseroIzq();
   }
   else
   {
-    sensorPin = leerSensorLinea(SENS_LIN_TDER); //sensor de linea Trasero-Derecho
-    if(sensorPin == LINEA_DETECTADA)
+    if(leerSensorLinea(SENS_LIN_TDER) == LINEA_DETECTADA) //sensor de linea Trasero-Derecho
     {
+      Serial.println("sensor de linea Trasero-Derecho");
       reaccionTraseroDer();
-    }
-    else
-    {
-      sensorPin = leerSensorLinea(SENS_LIN_FIZQ); //sensor de linea Frente-Izquierdo
-      if(sensorPin == LINEA_DETECTADA)
+     }
+     else 
+     {
+      if(leerSensorLinea(SENS_LIN_FIZQ) == LINEA_DETECTADA) //sensor de linea Frente-Izquierdo
       {
+        Serial.println("sensor de linea Frente-Izquierdo");
         reaccionFrenteIzq();
       }
       else
       {
-        sensorPin = leerSensorLinea(SENS_LIN_TIZQ); //sensor de linea Trasero-Izquierdo
-        if(sensorPin == LINEA_DETECTADA)
-        {
-          reaccionTraseroIzq();
-        }
+        //sensor de linea Frente-Derecho
+        Serial.println("sensor de linea Frente-Derecho");
+        reaccionFrenteDer();
       }
-    }
+     }
   }
 }
 
