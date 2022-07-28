@@ -25,14 +25,9 @@ const int SENS_ULTRASON_TRIGGER = 10; //Pin digital 10 para el TRIGGER del senso
 const int SENS_ULTRASON_ECHO = 11;    //Pin digital 11 para el ECHO del sensor ultrasonido
 
 int LINEA_DETECTADA = 1; //DETECCION DE LINEA BLANCA = 0
-const int LLAVE = 12;
-
-char comando = 's'; //variable de la maquina de estado.
 
 void setup() 
 {
-
-  pinMode(LLAVE, INPUT); //SI CONECTAMOS ESTA LLAVE A 5V EL MOTOR AVANZA ATR
   
   //seteo pines de entrada de motores, sensores de linea y ultrasonido
   pinMode(MOT1_C1, OUTPUT);
@@ -58,14 +53,6 @@ void loop()
   for(;;) 
   {
     delay(50);
-    comandos(comando);
-    
-    if(digitalRead(LLAVE) == HIGH)  //el robot avanza ignorando los sensores
-    {
-      comandos('m');
-    }
-    else
-    {
       if(checkSenLineaTodos() == LINEA_DETECTADA)
       {
         comandos('s');
@@ -73,10 +60,8 @@ void loop()
       }
       else 
       {
-        comandos('m');
         checkEnemy();
       }
-    }
   }
 }
 
@@ -244,7 +229,7 @@ void reaccionFrenteDer()
   comandos('c');
   delay(2000);
   comandos('i');
-  tiempoGiro(45);
+  delay(tiempoGiro(135));
   comandos('m');
 }
 
@@ -254,7 +239,7 @@ void reaccionFrenteIzq()
   comandos('c');
   delay(2000);
   comandos('d');
-  tiempoGiro(45);
+  delay(tiempoGiro(135));
   comandos('m');
   }
 
@@ -285,9 +270,9 @@ void reaccionTraseroIzq()
 
 int tiempoGiro(int angulo) //calculo el tiempo que requiere el robot para girar cierto angulo
 {
-  int tgiro360 = 8; //tiempo que tarda en dar un giro completo 8 segundos -- aprox
-
+  int tgiro360 = 8000; //tiempo que tarda en dar un giro completo 8 segundos -- aprox
+  
   //REGLA DE 3 SIMPLES --- esto capaz podria estar en una funcion aparte
   // 1/360 = 0.00277778
-  return ((tgiro360 * angulo) * 0.00277778);
+  return ((angulo * 0.00277778) * tgiro360);
 }
