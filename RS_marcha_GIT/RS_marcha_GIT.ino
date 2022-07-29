@@ -18,7 +18,7 @@ const int SENS_ULTRASON_ECHO_1 = 11;   //Pin digital 11 para el ECHO del sensor 
 char comando = 's', modo = 'a'; //comando y modo iniciales -- MOTOR PARADO (S) Y MODO AUTOMATICO (A)
 char aux; //variable auxiliar para actualizar el comando entrante por el monitor serie
 
-int LINEA_DETECTADA = 0; //DETECCION DE LINEA BLANCA = 0
+int LINEA_DETECTADA = 1; //DETECCION DE LINEA BLANCA = 0
 
 const int LLAVE = 12;
 
@@ -74,25 +74,16 @@ void loop()
     {
       if(modo == 'a' ) //modo automatico
       {
-        if(checkSenLineaTodos() == LINEA_DETECTADA)
-        {
-          maquinaEstados('s');
-          Serial.println("LINEA BLANCA A LA VISTA");
-          checkSensorLinea();
-        }
-        else 
-        {
-          maquinaEstados('m');
-          checkEnemy();
-        }
+        checkEnemy();
       }
-      if(modo == 't' ) //modo test
-      {
-        testUltrasonido();
-      }
+    }
+    if(modo == 't' ) //modo test
+    {
+      testUltrasonido();
     }
   }
 }
+
 /*
  * ************************************************************************************************************************************************
  * ************************************************************************************************************************************************
@@ -200,7 +191,16 @@ void checkEnemy()
   else
   {
     Serial.println("no hay nadie uwu");
-    maquinaEstados('i');
+    if(checkSenLineaTodos() == LINEA_DETECTADA)
+    {
+      maquinaEstados('s');
+      Serial.println("LINEA BLANCA A LA VISTA");
+      checkSensorLinea();
+    }
+    else
+    {
+      maquinaEstados('m');
+    }
   }
 }
 
@@ -224,12 +224,23 @@ int checkSenLineaTodos() //VERIFICO SI ALGUN SENSOR DETECTA ALGO
   sensor2 = leerSensorLinea(SENS_LIN_TDER);
   sensor3 = leerSensorLinea(SENS_LIN_FIZQ);
   sensor4 = leerSensorLinea(SENS_LIN_TIZQ);
-  linea_cerca = sensor1 & sensor2 & sensor3 & sensor4;
-  Serial.println("resul linea cerca:");
-  Serial.println(linea_cerca);
-  return linea_cerca; //linea_cerca = 0 significa LINEA BLANCA CERCA AHHHH CORRAN
   
-  //return (sensor1 & sensor2 & sensor3 & sensor4); --- esto lo deberia poner cuando saque los serial print
+  if(LINEA_DETECTADA == 0)
+  {
+    linea_cerca = sensor1 & sensor2 & sensor3 & sensor4;
+    Serial.println("resul PRODUCTO LOGICO linea cerca:");
+    Serial.println(linea_cerca);
+    return linea_cerca; //linea_cerca = 0 significa LINEA BLANCA CERCA AHHHH CORRAN
+    
+    //return (sensor1 & sensor2 & sensor3 & sensor4); --- esto lo deberia poner cuando saque los serial print
+  }
+  else //caso en el que usemos COLORES INVERTIDOS
+  {
+    linea_cerca = sensor1 | sensor2 | sensor3 | sensor4;
+    Serial.println("resul SUMA LOGICA linea cerca:");
+    Serial.println(linea_cerca);
+    return linea_cerca;
+  }
 }
 
 //leo sensor
@@ -243,12 +254,6 @@ int leerSensorLinea(int sensor)
 //verifico cual sensor detecto la linea blanca
 void checkSensorLinea()
 {
-  /*
-   * int SENS_LIN_FDER = 1; //sensor de linea Frente-Derecho
-     int SENS_LIN_TDER = 2; //sensor de linea Trasero-Derecho
-     int SENS_LIN_FIZQ = 3; //sensor de linea Frente-Izquierdo
-     int SENS_LIN_TIZQ = 4; //sensor de linea Trasero-Izquierdo
-   */
   if(leerSensorLinea(SENS_LIN_TIZQ) == LINEA_DETECTADA) //sensor de linea Trasero-Izquierdo
   {
     Serial.println("sensor de linea Trasero-Izquierdo");
