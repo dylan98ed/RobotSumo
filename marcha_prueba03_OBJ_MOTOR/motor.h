@@ -1,7 +1,3 @@
-/*
- * https://www.youtube.com/watch?v=xZ3EehV-Ggk&ab_channel=ManuelBautista
-*/
-
 class Motor
 {
  private: 

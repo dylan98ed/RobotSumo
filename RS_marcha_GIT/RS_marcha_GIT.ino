@@ -1,9 +1,9 @@
 
 //declaro variables..
-int MOT1_C1 = 6;    //"MOT1_C1" es un nombre que vos elegis, 5 es el numero de pin de la placa que va a ejecutar la accion
-int MOT1_C2 = 7;
-int MOT2_C1 = 8;
-int MOT2_C2 = 9;
+int MOT1_C1 = 8;    //"MOT1_C1" es un nombre que vos elegis, 5 es el numero de pin de la placa que va a ejecutar la accion
+int MOT1_C2 = 9;
+int MOT2_C1 = 10;
+int MOT2_C2 = 11;
 // MOT 1 --- MOTOR IZQ
 // MOT 2 --- MOTOR DER
 
@@ -12,10 +12,10 @@ int SENS_LIN_TDER = 3; //sensor de linea Trasero-Derecho
 int SENS_LIN_FIZQ = 4; //sensor de linea Frente-Izquierdo
 int SENS_LIN_TIZQ = 5; //sensor de linea Trasero-Izquierdo
 
-const int SENS_ULTRASON_TRIGGER_1 = 10;   //Pin digital 10 para el TRIGGER del sensor ultrasonido
-const int SENS_ULTRASON_ECHO_1 = 11;   //Pin digital 11 para el ECHO del sensor ultrasonido
+const int SENS_ULTRASON_TRIGGER_1 = 6;   //Pin digital 10 para el TRIGGER del sensor ultrasonido
+const int SENS_ULTRASON_ECHO_1 = 7;   //Pin digital 11 para el ECHO del sensor ultrasonido
 
-char comando = 's', modo = 'a'; //comando y modo iniciales -- MOTOR PARADO (S) Y MODO AUTOMATICO (A)
+char comando = 's', modo = 't'; //comando y modo iniciales -- MOTOR PARADO (S) Y MODO AUTOMATICO (A)
 char aux; //variable auxiliar para actualizar el comando entrante por el monitor serie
 
 int LINEA_DETECTADA = 1; //DETECCION DE LINEA BLANCA = 0
@@ -65,7 +65,7 @@ void loop()
     
     //ejecuto funcion CASE
     maquinaEstados(comando);
-    
+    /*
     if(digitalRead(LLAVE) == HIGH)
     {
       maquinaEstados('m');
@@ -76,7 +76,7 @@ void loop()
       {
         checkEnemy();
       }
-    }
+    }*/
     if(modo == 't' ) //modo test
     {
       testUltrasonido();

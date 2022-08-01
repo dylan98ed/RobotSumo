@@ -4,6 +4,7 @@
  *              -IGNORA LOS SENSORES DE LINEA SI DETECTA ALGO EL ULTRASONIDO!
  *              -Implemento temporizadores en vez de delays gg
  *              -Contiene una interrupcion en el tiempo de giro si detecta al enemigo
+ *              -INTENTO DE CAMBIO DE PINES SI DETECTA ALGO
  * 
  * COMPONENTES:
  *    Arduino Uno.
@@ -17,18 +18,21 @@
 //LIBRERIA PARA UTILIZAR EL Temporizador DE LA PLACA
 #include <TimerOne.h>;
  
-int MOT1_C1 = 6;        //motor1 conector 1 lado izquierdo
-int MOT1_C2 = 7;        //motor1 conector 2
-int MOT2_C1 = 8;        //motor2 conector 1 lado derecho
-int MOT2_C2 = 9;        //motor2 conector 2
+const int MOT1_C1 = 14;        //motor1 conector 1 lado izquierdo
+const int MOT1_C2 = 15;        //motor1 conector 2
+const int MOT2_C1 = 16;        //motor2 conector 1 lado derecho
+const int MOT2_C2 = 17;        //motor2 conector 2
+//salidas analogicas A0-A7 -- pines 14-22 ?
 
 int SENS_LIN_FDER = 2;  //sensor de linea Frente-Derecho
 int SENS_LIN_TDER = 3;  //sensor de linea Trasero-Derecho
 int SENS_LIN_FIZQ = 4;  //sensor de linea Frente-Izquierdo
 int SENS_LIN_TIZQ = 5;  //sensor de linea Trasero-Izquierdo
 
-const int SENS_ULTRASON_TRIGGER = 10; //Pin digital 10 para el TRIGGER del sensor ultrasonido
-const int SENS_ULTRASON_ECHO = 11;    //Pin digital 11 para el ECHO del sensor ultrasonido
+int SENS_ULTRASON_TRIGGER_1 = 8; //Pin digital 10 para el TRIGGER del sensor ultrasonido
+int SENS_ULTRASON_ECHO_1 = 9;    //Pin digital 11 para el ECHO del sensor ultrasonido
+int SENS_ULTRASON_TRIGGER_2 = 10; //Pin digital 10 para el TRIGGER del sensor ultrasonido
+int SENS_ULTRASON_ECHO_2 = 11;    //Pin digital 11 para el ECHO del sensor ultrasonido
 
 const int T_GIRO360 = 8; //tiempo que tarda en dar un giro completo 8 segundos -- aprox
 
@@ -53,10 +57,13 @@ void setup()
   pinMode(SENS_LIN_FIZQ, INPUT);
   pinMode(SENS_LIN_TIZQ, INPUT);
   
-  pinMode(SENS_ULTRASON_TRIGGER, OUTPUT);
-  pinMode(SENS_ULTRASON_ECHO, INPUT);
-  
-  digitalWrite(SENS_ULTRASON_TRIGGER, LOW);//Inicializamos el pin con 0
+  pinMode(SENS_ULTRASON_TRIGGER_1, OUTPUT);
+  pinMode(SENS_ULTRASON_ECHO_1, INPUT);
+  digitalWrite(SENS_ULTRASON_TRIGGER_1, LOW);//Inicializamos el pin con 0
+
+  pinMode(SENS_ULTRASON_TRIGGER_1, OUTPUT);
+  pinMode(SENS_ULTRASON_ECHO_1, INPUT);
+  digitalWrite(SENS_ULTRASON_TRIGGER_1, LOW);//Inicializamos el pin con 0
 
   Timer1.initialize(1000000);            //configura el timer en 1 segundo
   //1000000 microsegundos = 1 segundo
@@ -69,7 +76,7 @@ void loop()
 { 
   for(;;) 
   {  
-    checkEnemy(SENS_ULTRASON_TRIGGER, SENS_ULTRASON_ECHO);
+    checkEnemy();
   }
 }
 
@@ -164,9 +171,9 @@ long promedioDistancia(int trigger, int echo)
  }
 
 //busqueda del contrincante
-void checkEnemy(int trigger, int echo)
+void checkEnemy()
 { 
-  long distancia_promedio = promedioDistancia(trigger, echo);
+  long distancia_promedio = promedioDistancia(SENS_ULTRASON_TRIGGER_1, SENS_ULTRASON_ECHO_1);
   
   if(distancia_promedio <= 30) // el ring tiene un area de 175cm o 154cm -- alrededor hay 100cm vacio
   {
@@ -177,7 +184,7 @@ void checkEnemy(int trigger, int echo)
     if(checkSenLineaTodos() == LINEA_DETECTADA)
     {
       maquinaEstados('s');
-      checkSensorLinea(trigger, echo);
+      checkSensorLinea(SENS_ULTRASON_TRIGGER_1, SENS_ULTRASON_ECHO_1);
     }
     else
     {
@@ -291,7 +298,6 @@ void Temporizador()
 {
   //incremento el timer
   tempo++;
-  Serial.println(tempo);
   //reseteo el contador cuando llega a 1000 segundos -- por si acaso para que no se desborde
   if (tempo>1000)
     tempo=0;

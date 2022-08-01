@@ -17,23 +17,28 @@
 //LIBRERIA PARA UTILIZAR EL Temporizador DE LA PLACA
 #include <TimerOne.h>;
  
-int MOT1_C1 = 6;        //motor1 conector 1 lado izquierdo
-int MOT1_C2 = 7;        //motor1 conector 2
-int MOT2_C1 = 8;        //motor2 conector 1 lado derecho
-int MOT2_C2 = 9;        //motor2 conector 2
+const int MOT_FD_C1 = 10;        // motor frente-derecho conector 1
+const int MOT_FD_C2 = 11;        // motor frente-derecho conector 2
+const int MOT_FI_C1 = 12;        // motor frente-izquierdo conector 1
+const int MOT_FI_C2 = 13;        // motor frente-izquierdo conector 2
+const int MOT_TD_C1 = 14;        // motor trasero-derecho conector 1
+const int MOT_TD_C2 = 15;        // motor trasero-derecho conector 2
+const int MOT_TI_C1 = 16;        // motor trasero-izquierdo conector 1
+const int MOT_TI_C2 = 17;        // motor trasero-izquierdo conector 2
+//salidas analogicas A0-A5 -- pines 14-19 ?
 
 int SENS_LIN_FDER = 2;  //sensor de linea Frente-Derecho
 int SENS_LIN_TDER = 3;  //sensor de linea Trasero-Derecho
 int SENS_LIN_FIZQ = 4;  //sensor de linea Frente-Izquierdo
 int SENS_LIN_TIZQ = 5;  //sensor de linea Trasero-Izquierdo
 
-const int SENS_ULTRASON_TRIGGER = 10; //Pin digital 10 para el TRIGGER del sensor ultrasonido
-const int SENS_ULTRASON_ECHO = 11;    //Pin digital 11 para el ECHO del sensor ultrasonido
+int SENS_ULTRASON_TRIGGER_1 = 6; //Pin digital 10 para el TRIGGER del sensor ultrasonido
+int SENS_ULTRASON_ECHO_1 = 7;    //Pin digital 11 para el ECHO del sensor ultrasonido
+//int SENS_ULTRASON_TRIGGER_2 = 8; //Pin digital 10 para el TRIGGER del sensor ultrasonido
+//int SENS_ULTRASON_ECHO_2 = 9;    //Pin digital 11 para el ECHO del sensor ultrasonido
 
 const int T_GIRO360 = 8; //tiempo que tarda en dar un giro completo 8 segundos -- aprox
-
-//variable que utilizo para verificar cuando hubo una interrupcion en un bucle
-const int Flag_Interrupcion = 0; 
+const long DISTANCIA_VISION = 70; //distancia de condicion de movimiento para la deteccion del contrincante
 
 const int LINEA_DETECTADA = 0; //DETECCION DE LINEA BLANCA = 0
  
@@ -43,21 +48,28 @@ volatile long int tempo=0;
 void setup() 
 {
   //seteo pines de entrada de motores, sensores de linea y ultrasonido
-  pinMode(MOT1_C1, OUTPUT);
-  pinMode(MOT1_C2, OUTPUT);
-  pinMode(MOT2_C1, OUTPUT);
-  pinMode(MOT2_C2, OUTPUT);
+  pinMode(MOT_FD_C1, OUTPUT);
+  pinMode(MOT_FD_C2, OUTPUT);
+  pinMode(MOT_FI_C1, OUTPUT);
+  pinMode(MOT_FI_C2, OUTPUT);
+  pinMode(MOT_TD_C1, OUTPUT);
+  pinMode(MOT_TD_C2, OUTPUT);
+  pinMode(MOT_TI_C1, OUTPUT);
+  pinMode(MOT_TI_C2, OUTPUT);
   
   pinMode(SENS_LIN_FDER, INPUT);
   pinMode(SENS_LIN_TDER, INPUT);
   pinMode(SENS_LIN_FIZQ, INPUT);
   pinMode(SENS_LIN_TIZQ, INPUT);
   
-  pinMode(SENS_ULTRASON_TRIGGER, OUTPUT);
-  pinMode(SENS_ULTRASON_ECHO, INPUT);
-  
-  digitalWrite(SENS_ULTRASON_TRIGGER, LOW);//Inicializamos el pin con 0
-
+  pinMode(SENS_ULTRASON_TRIGGER_1, OUTPUT);
+  pinMode(SENS_ULTRASON_ECHO_1, INPUT);
+  digitalWrite(SENS_ULTRASON_TRIGGER_1, LOW);//Inicializamos el pin con 0
+  /*
+  pinMode(SENS_ULTRASON_TRIGGER_2, OUTPUT);
+  pinMode(SENS_ULTRASON_ECHO_2, INPUT);
+  digitalWrite(SENS_ULTRASON_TRIGGER_2, LOW);//Inicializamos el pin con 0
+  */
   Timer1.initialize(1000000);            //configura el timer en 1 segundo
   //1000000 microsegundos = 1 segundo
   Timer1.attachInterrupt(Temporizador);   //configura la interrupcion del timer
@@ -69,7 +81,7 @@ void loop()
 { 
   for(;;) 
   {  
-    checkEnemy(SENS_ULTRASON_TRIGGER, SENS_ULTRASON_ECHO);
+    checkEnemy(SENS_ULTRASON_TRIGGER_1, SENS_ULTRASON_ECHO_1);
   }
 }
 
@@ -78,26 +90,36 @@ void maquinaEstados(char comando)
   switch(comando) 
   {
     case 'm':                           //el robot avanza.
-      marcha(MOT1_C1,MOT1_C2);
-      marcha(MOT2_C1,MOT2_C2);
+      marcha(MOT_FD_C1,MOT_FD_C2);
+      marcha(MOT_FI_C1,MOT_FI_C2);
+      marcha(MOT_TD_C1,MOT_TD_C2);
+      marcha(MOT_TI_C1,MOT_TI_C2);
       break;
     case 'c':                           //el robot retrocede.
-      contramarcha(MOT1_C1,MOT1_C2);
-      contramarcha(MOT2_C1,MOT2_C2);
+      contramarcha(MOT_FD_C1,MOT_FD_C2);
+      contramarcha(MOT_FI_C1,MOT_FI_C2);
+      contramarcha(MOT_TD_C1,MOT_TD_C2);
+      contramarcha(MOT_TI_C1,MOT_TI_C2);
       break;
     case 's':                           //el robot se detiene
-      parada(MOT1_C1,MOT1_C2);
-      parada(MOT2_C1,MOT2_C2);
+      parada(MOT_FD_C1,MOT_FD_C2);
+      parada(MOT_FI_C1,MOT_FI_C2);
+      parada(MOT_TD_C1,MOT_TD_C2);
+      parada(MOT_TI_C1,MOT_TI_C2);
       break;
     case 'd':                           //el motor der avanza, izq retrocede
-      giroDer(MOT1_C1,MOT1_C2,MOT2_C1,MOT2_C2);
+      giroDer(MOT_FD_C1,MOT_FD_C2,MOT_FI_C1,MOT_FI_C2);
+      giroDer(MOT_TD_C1,MOT_TD_C2,MOT_TI_C1,MOT_TI_C2);
       break;
     case 'i':                           //el motor izq avanza, der retrocede
-      giroIzq(MOT1_C1,MOT1_C2,MOT2_C1,MOT2_C2);
+      giroIzq(MOT_FD_C1,MOT_FD_C2,MOT_FI_C1,MOT_FI_C2);
+      giroIzq(MOT_TD_C1,MOT_TD_C2,MOT_TI_C1,MOT_TI_C2);
       break;
     default:                            //el robot se detiene
-      parada(MOT1_C1,MOT1_C2); //motor1
-      parada(MOT2_C1,MOT2_C2); //motor2
+      parada(MOT_FD_C1,MOT_FD_C2); 
+      parada(MOT_FI_C1,MOT_FI_C2); 
+      parada(MOT_TD_C1,MOT_TD_C2); 
+      parada(MOT_TI_C1,MOT_TI_C2); 
       break;
   }
 }

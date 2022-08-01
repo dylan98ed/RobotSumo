@@ -17,18 +17,18 @@
 //LIBRERIA PARA UTILIZAR EL Temporizador DE LA PLACA
 #include <TimerOne.h>;
  
-int MOT1_C1 = 6;        //motor1 conector 1 lado izquierdo
-int MOT1_C2 = 7;        //motor1 conector 2
-int MOT2_C1 = 8;        //motor2 conector 1 lado derecho
-int MOT2_C2 = 9;        //motor2 conector 2
+int MOT1_C1 = 8;        //motor1 conector 1 lado izquierdo
+int MOT1_C2 = 9;        //motor1 conector 2
+int MOT2_C1 = 10;        //motor2 conector 1 lado derecho
+int MOT2_C2 = 11;        //motor2 conector 2
 
 int SENS_LIN_FDER = 2;  //sensor de linea Frente-Derecho
-int SENS_LIN_TDER = 3;  //sensor de linea Trasero-Derecho
+//int SENS_LIN_TDER = 3;  //sensor de linea Trasero-Derecho
 int SENS_LIN_FIZQ = 4;  //sensor de linea Frente-Izquierdo
-int SENS_LIN_TIZQ = 5;  //sensor de linea Trasero-Izquierdo
+//int SENS_LIN_TIZQ = 5;  //sensor de linea Trasero-Izquierdo
 
-const int SENS_ULTRASON_TRIGGER = 10; //Pin digital 10 para el TRIGGER del sensor ultrasonido
-const int SENS_ULTRASON_ECHO = 11;    //Pin digital 11 para el ECHO del sensor ultrasonido
+const int SENS_ULTRASON_TRIGGER = 6; //Pin digital 10 para el TRIGGER del sensor ultrasonido
+const int SENS_ULTRASON_ECHO = 7;    //Pin digital 11 para el ECHO del sensor ultrasonido
 
 const int T_GIRO360 = 8; //tiempo que tarda en dar un giro completo 8 segundos -- aprox
 
@@ -36,12 +36,16 @@ const int T_GIRO360 = 8; //tiempo que tarda en dar un giro completo 8 segundos -
 const int Flag_Interrupcion = 0; 
 
 const int LINEA_DETECTADA = 0; //DETECCION DE LINEA BLANCA = 0
+
+const int COND_MARCHA = 12;
  
 //Variable para la interrupcion
 volatile long int tempo=0;
 
 void setup() 
 {
+  maquinaEstados('s');
+  
   //seteo pines de entrada de motores, sensores de linea y ultrasonido
   pinMode(MOT1_C1, OUTPUT);
   pinMode(MOT1_C2, OUTPUT);
@@ -49,14 +53,16 @@ void setup()
   pinMode(MOT2_C2, OUTPUT);
   
   pinMode(SENS_LIN_FDER, INPUT);
-  pinMode(SENS_LIN_TDER, INPUT);
+  //pinMode(SENS_LIN_TDER, INPUT);
   pinMode(SENS_LIN_FIZQ, INPUT);
-  pinMode(SENS_LIN_TIZQ, INPUT);
+  //pinMode(SENS_LIN_TIZQ, INPUT);
   
   pinMode(SENS_ULTRASON_TRIGGER, OUTPUT);
   pinMode(SENS_ULTRASON_ECHO, INPUT);
   
   digitalWrite(SENS_ULTRASON_TRIGGER, LOW);//Inicializamos el pin con 0
+
+  pinMode(COND_MARCHA, INPUT);
 
   Timer1.initialize(1000000);            //configura el timer en 1 segundo
   //1000000 microsegundos = 1 segundo
@@ -168,20 +174,27 @@ void checkEnemy(int trigger, int echo)
 { 
   long distancia_promedio = promedioDistancia(trigger, echo);
   
-  if(distancia_promedio <= 70) // el ring tiene un area de 175cm o 154cm -- alrededor hay 100cm vacio
+  if(distancia_promedio <= 50) // el ring tiene un area de 175cm o 154cm -- alrededor hay 100cm vacio
   {
     maquinaEstados('m');
   }
   else
   {
-    if(checkSenLineaTodos() == LINEA_DETECTADA)
+    if((checkSenLineaTodos() == LINEA_DETECTADA) && (distancia_promedio >= 50))
     {
       maquinaEstados('s');
       checkSensorLinea(trigger, echo);
     }
     else
     {
-      maquinaEstados('m');
+      if(COND_MARCHA==1)
+      {
+        maquinaEstados('m');
+      }
+      else
+      {
+        maquinaEstados('i');
+      }
     }
   }
 }
@@ -190,17 +203,19 @@ int checkSenLineaTodos() //VERIFICO SI ALGUN SENSOR DETECTA ALGO
 {
   int sensor1, sensor2, sensor3, sensor4;
   sensor1 = leerSensorLinea(SENS_LIN_FDER);
-  sensor2 = leerSensorLinea(SENS_LIN_TDER);
+  //sensor2 = leerSensorLinea(SENS_LIN_TDER);
   sensor3 = leerSensorLinea(SENS_LIN_FIZQ);
-  sensor4 = leerSensorLinea(SENS_LIN_TIZQ);
+  //sensor4 = leerSensorLinea(SENS_LIN_TIZQ);
   
   if(LINEA_DETECTADA == 0)
   {
-    return (sensor1 & sensor2 & sensor3 & sensor4); //linea_cerca = 0 significa LINEA BLANCA CERCA AHHHH CORRAN
+    return (sensor1 & sensor3); //ignoramos los de atras
+    //return (sensor1 & sensor2 & sensor3 & sensor4); //linea_cerca = 0 significa LINEA BLANCA CERCA AHHHH CORRAN
   }
   else //caso en el que usemos COLORES INVERTIDOS
   {
-    return (sensor1 | sensor2 | sensor3 | sensor4);
+    return (sensor1 | sensor3);
+    //return (sensor1 | sensor2 | sensor3 | sensor4);
   }
 }
 
@@ -224,7 +239,7 @@ void checkSensorLinea(int trigger, int echo)
     if(leerSensorLinea(SENS_LIN_FIZQ) == LINEA_DETECTADA)
     {
       reaccionFrenteIzq(trigger, echo);
-    }
+    }/*
     else
     {
       if(leerSensorLinea(SENS_LIN_TDER) == LINEA_DETECTADA)
@@ -238,7 +253,7 @@ void checkSensorLinea(int trigger, int echo)
           reaccionTraseroIzq();
         }
       }
-    }
+    }*/
   }
 }
 
@@ -307,7 +322,7 @@ void tiempoEsperaConInterrup(int segundos, int trigger, int echo)
   { 
     long distancia_promedio = promedioDistancia(trigger, echo);
   
-    if(distancia_promedio <= 70)
+    if(distancia_promedio <= 50)
     {
       maquinaEstados('m');
       break;

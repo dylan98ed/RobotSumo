@@ -27,18 +27,18 @@
  * ESTADO: FUNCIONA
  ****************************************************************************************************************/
  
-int MOT1_C1 = 6;        //motor1 conector 1 lado izquierdo
-int MOT1_C2 = 7;        //motor1 conector 2
-int MOT2_C1 = 8;        //motor2 conector 1 lado derecho
-int MOT2_C2 = 9;        //motor2 conector 2
+int MOT1_C1 = 10;        //motor1 conector 1 lado izquierdo
+int MOT1_C2 = 11;        //motor1 conector 2
+int MOT2_C1 = 12;        //motor2 conector 1 lado derecho
+int MOT2_C2 = 13;        //motor2 conector 2
 
 int SENS_LIN_FDER = 2;  //sensor de linea Frente-Derecho
 int SENS_LIN_TDER = 3;  //sensor de linea Trasero-Derecho
 int SENS_LIN_FIZQ = 4;  //sensor de linea Frente-Izquierdo
 int SENS_LIN_TIZQ = 5;  //sensor de linea Trasero-Izquierdo
 
-const int SENS_ULTRASON_TRIGGER = 10; //Pin digital 10 para el TRIGGER del sensor ultrasonido
-const int SENS_ULTRASON_ECHO = 11;    //Pin digital 11 para el ECHO del sensor ultrasonido
+const int SENS_ULTRASON_TRIGGER = 6; //Pin digital 10 para el TRIGGER del sensor ultrasonido
+const int SENS_ULTRASON_ECHO = 7;    //Pin digital 11 para el ECHO del sensor ultrasonido
 
 int LINEA_DETECTADA = 0; //DETECCION DE LINEA BLANCA = 0
 
